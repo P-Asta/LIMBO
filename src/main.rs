@@ -65,14 +65,14 @@ fn get_pos(id: isize) -> (f32, f32) {
     }
     let n = 75.;
     [
-        (n, n * 3.),
         (-n, n * 3.),
+        (n, n * 3.),
         (n, n),
-        (-n, n),
         (n, -n),
-        (-n, -n),
         (n, -n * 3.),
         (-n, -n * 3.),
+        (-n, -n),
+        (-n, n),
     ][id as usize]
 }
 
