@@ -37,13 +37,14 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 sprite: Sprite {
                     custom_size: Some(Vec2::new(100., 100.)),
                     color: Color::Rgba {
-                        red: 0.5,
-                        green: 0.5,
-                        blue: 0.5,
+                        red: 1.,
+                        green: 1.,
+                        blue: 1.,
                         alpha: 1.,
                     },
                     ..Default::default()
                 },
+                texture: asset_server.load("key.png"),
                 transform: Transform {
                     translation: Vec3::new(0., 0., 0.),
                     ..Default::default()
@@ -76,6 +77,28 @@ fn get_pos(id: isize) -> (f32, f32) {
     ][id as usize]
 }
 
+fn get_color(id: isize, n: usize) -> (f32, f32, f32) {
+    let mut id: isize = id % 8;
+    if id < 0 {
+        id = id % 8 + 8;
+    }
+
+    if n >= 360 {
+        [
+            (3., 0.5, 0.5),
+            (1.5, 2.5, 0.5),
+            (0.5, 3., 0.5),
+            (0.5, 1.5, 2.5),
+            (0.5, 0.5, 3.),
+            (0.5, 0.5, 1.5),
+            (0.5, 0.5, 0.5),
+            (1., 1., 1.),
+        ][id as usize]
+    } else {
+        (3., 0.5, 0.5)
+    }
+}
+
 fn key_movement(mut q: Query<(&mut Transform, &mut Key, &mut Sprite), With<Key>>, time: Res<Time>) {
     static mut N: usize = 0;
     static mut REAL: isize = 0;
@@ -91,7 +114,7 @@ fn key_movement(mut q: Query<(&mut Transform, &mut Key, &mut Sprite), With<Key>>
     if unsafe { N >= 98 && N <= 352 } {
         let mut rng = rand::thread_rng();
         while n == 0 {
-            n = rng.gen_range(-7..=7);
+            n = rng.gen_range(-6..=7);
         }
     }
     for (mut transform, mut key, mut sprite) in q.iter_mut() {
@@ -102,11 +125,15 @@ fn key_movement(mut q: Query<(&mut Transform, &mut Key, &mut Sprite), With<Key>>
             key.real = true;
             sprite.color = Color::Rgba {
                 red: 0.5,
-                green: 1.,
+                green: 3.,
                 blue: 0.5,
                 alpha: 1.,
             };
-            unsafe { N += 1 }
+            unsafe {
+                if N <= 360 {
+                    N += 1
+                }
+            }
         }
         if key.timer.finished() {
             key.position += n;
@@ -114,12 +141,34 @@ fn key_movement(mut q: Query<(&mut Transform, &mut Key, &mut Sprite), With<Key>>
                 N += 1;
             }
         }
-        transform.translation +=
-            (Vec3::new(get_pos(key.position).0, get_pos(key.position).1, 0.) - pos) / 10.;
+        if unsafe { N >= 360 } {
+            unsafe {
+                N += 1;
+                transform.translation += (Vec3::new(
+                    f32::sin(N as f32 / 1000. + key.position as f32 / 1.25) * 300.,
+                    f32::cos(N as f32 / 1000. + key.position as f32 / 1.25) * 200.,
+                    0.,
+                ) - pos)
+                    / 30.;
+
+                // transform.translation = (Vec3::new(
+                //     ,
+                //     ,
+                //     0.,
+                // ) - pos)
+                //     / 10.;
+            }
+        } else {
+            transform.translation +=
+                (Vec3::new(get_pos(key.position).0, get_pos(key.position).1, 0.) - pos) / 15.;
+        }
         sprite.color = Color::Rgba {
-            red: sprite.color.as_rgba().r() + (0.5 - sprite.color.as_rgba().r()) / 20.,
-            green: sprite.color.as_rgba().g() + (0.5 - sprite.color.as_rgba().g()) / 20.,
-            blue: sprite.color.as_rgba().b() + (0.5 - sprite.color.as_rgba().b()) / 20.,
+            red: sprite.color.as_rgba().r()
+                + (get_color(key.position, unsafe { N }).0 - sprite.color.as_rgba().r()) / 20.,
+            green: sprite.color.as_rgba().g()
+                + (get_color(key.position, unsafe { N }).1 - sprite.color.as_rgba().g()) / 20.,
+            blue: sprite.color.as_rgba().b()
+                + (get_color(key.position, unsafe { N }).2 - sprite.color.as_rgba().b()) / 20.,
             alpha: sprite.color.as_rgba().a() + (1. - sprite.color.as_rgba().a()) / 20.,
         };
     }
