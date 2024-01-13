@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 bevy = { version = "0.12.0", features = ["wayland", "dynamic_linking", "wav"] }
 rand = "0.8.5"
+system_shutdown = "4.0.1"
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]

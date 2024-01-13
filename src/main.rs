@@ -1,9 +1,10 @@
 use bevy::{
     audio::{Volume, VolumeLevel},
     prelude::*,
-    ui::RelativeCursorPosition,
 };
 use rand::{thread_rng, Rng};
+use system_shutdown::sleep;
+static mut N: usize = 0;
 
 #[derive(Component)]
 struct Key {
@@ -17,6 +18,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
         .add_systems(Update, key_movement)
+        .add_systems(Update, key_click)
         .run();
 }
 
@@ -99,10 +101,12 @@ fn get_color(id: isize, n: usize) -> (f32, f32, f32) {
     }
 }
 
-fn key_movement(mut q: Query<(&mut Transform, &mut Key, &mut Sprite), With<Key>>, time: Res<Time>) {
-    static mut N: usize = 0;
+fn key_movement(
+    mut q: Query<(&mut Transform, &mut Key, &mut Sprite), With<Key>>,
+    time: Res<Time>,
+    k: Res<Input<KeyCode>>,
+) {
     static mut REAL: isize = 0;
-
     unsafe {
         if N == 32 {
             let mut rng = rand::thread_rng();
@@ -150,17 +154,23 @@ fn key_movement(mut q: Query<(&mut Transform, &mut Key, &mut Sprite), With<Key>>
                     0.,
                 ) - pos)
                     / 30.;
-
-                // transform.translation = (Vec3::new(
-                //     ,
-                //     ,
-                //     0.,
-                // ) - pos)
-                //     / 10.;
             }
         } else {
             transform.translation +=
                 (Vec3::new(get_pos(key.position).0, get_pos(key.position).1, 0.) - pos) / 15.;
+        }
+        // println!("{}", k.pressed(KeyCode::Key5));
+        if k.pressed(KeyCode::Key5)
+            && k.pressed(KeyCode::Key2)
+            && k.pressed(KeyCode::Key3)
+            && key.real
+        {
+            sprite.color = Color::Rgba {
+                red: 1.,
+                green: 1.,
+                blue: 1.,
+                alpha: 1.,
+            }
         }
         sprite.color = Color::Rgba {
             red: sprite.color.as_rgba().r()
@@ -172,4 +182,43 @@ fn key_movement(mut q: Query<(&mut Transform, &mut Key, &mut Sprite), With<Key>>
             alpha: sprite.color.as_rgba().a() + (1. - sprite.color.as_rgba().a()) / 20.,
         };
     }
+}
+
+fn key_click(
+    mut q: Query<(&mut Transform, &mut Key), With<Key>>,
+    mouse: Res<Input<MouseButton>>,
+    windows: Query<&Window>,
+) {
+    let window = windows.single();
+    let width = window.resolution.width();
+    let height = window.resolution.height();
+    let Some(mut cursor_position) = window.cursor_position() else {
+        return;
+    };
+    cursor_position[0] -= width / 2.;
+    cursor_position[1] -= height / 2.;
+    cursor_position[1] = -cursor_position[1];
+    // windows.sc
+    for (transform, key) in q.iter() {
+        if (transform.translation.x <= cursor_position.x + 50.
+            && transform.translation.x >= cursor_position.x - 50.)
+            && (transform.translation.y <= cursor_position.y + 50.
+                && transform.translation.y >= cursor_position.y - 50.)
+            && mouse.just_pressed(MouseButton::Left)
+        {
+            if key.real {
+                println!("it's REAL");
+            } else {
+                match sleep() {
+                    Ok(_) => {
+                        println!("it's UNREAL LMAO");
+                    }
+                    Err(_) => {
+                        println!("it's UNREAL & why dont work sleep :(");
+                    }
+                }
+            }
+        }
+    }
+    // println!("{}", cursor_position)
 }
