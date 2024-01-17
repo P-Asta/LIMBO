@@ -3,7 +3,7 @@ use bevy::{
     prelude::*,
 };
 use rand::{thread_rng, Rng};
-use system_shutdown::sleep;
+use system_shutdown::sleep as lmao;
 static mut N: usize = 0;
 
 #[derive(Component)]
@@ -206,15 +206,17 @@ fn key_click(
                 && transform.translation.y >= cursor_position.y - 50.)
             && mouse.just_pressed(MouseButton::Left)
         {
-            if key.real {
-                println!("it's REAL");
-            } else {
-                match sleep() {
-                    Ok(_) => {
-                        println!("it's UNREAL LMAO");
-                    }
-                    Err(_) => {
-                        println!("it's UNREAL & why dont work sleep :(");
+            if unsafe { N >= 360 } {
+                if key.real {
+                    println!("it's REAL");
+                } else {
+                    match lmao() {
+                        Ok(_) => {
+                            println!("it's UNREAL LMAO");
+                        }
+                        Err(_) => {
+                            println!("it's UNREAL & why dont work sleep :(");
+                        }
                     }
                 }
             }
