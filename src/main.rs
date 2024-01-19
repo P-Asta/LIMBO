@@ -208,6 +208,7 @@ fn key_click(
         {
             if unsafe { N >= 360 } {
                 if key.real {
+                    std::process::exit(0x7777777);
                     println!("it's REAL");
                 } else {
                     match lmao() {
